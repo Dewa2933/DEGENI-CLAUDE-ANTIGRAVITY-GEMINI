@@ -440,10 +440,20 @@ open_dashboard() {
 }
 
 chat_mode() {
-    info "Starting AI Chat with Session Support..."
+    # Direct chat mode - no session management
+    export ANTHROPIC_BASE_URL=http://127.0.0.1:8317
+    export ANTHROPIC_AUTH_TOKEN=$(grep -A1 "api-keys:" $PROXY_DIR/config.yaml | tail -1 | sed 's/.*"\(sk-[^"]*\)".*/\1/' || echo "sk-default")
+    export ANTHROPIC_DEFAULT_SONNET_MODEL=gemini-claude-sonnet-4-5-thinking
+    export ANTHROPIC_DEFAULT_OPUS_MODEL=gemini-claude-sonnet-4-5-thinking
+
+    info "Starting DEGENI AI Chat..."
     echo ""
-    # Use ai wrapper which has session support
-    bash "$DEGENI_HOME/bin/ai"
+    echo -e "  ${D}Type your message and press Enter${NC}"
+    echo -e "  ${D}Press Ctrl+C to exit${NC}"
+    echo ""
+
+    # Direct call to Claude Code CLI without session wrapper
+    claude --dangerously-skip-permissions
 }
 
 quick_ask() {
@@ -475,7 +485,6 @@ show_help() {
     echo -e "  ${W}degeni test${NC}         Test accounts"
     echo -e "  ${W}degeni model${NC}        Switch AI model"
     echo ""
-    echo -e "  ${W}degeni sessions${NC}     Manage chat sessions"
     echo -e "  ${W}degeni dash${NC}         Open live dashboard"
     echo -e "  ${W}degeni uninstall${NC}    Uninstall DEGENI"
     echo ""
@@ -491,8 +500,7 @@ show_menu() {
     echo -e "  ${C}[4]${NC} ➕ Add Account      ${C}[9]${NC} 🌐 Dashboard"
     echo -e "  ${C}[5]${NC} ⚙️  Manage Accounts  ${C}[0]${NC} 🚪 Exit"
     echo ""
-    echo -e "  ${C}[s]${NC} 📂 Sessions        ${C}[e]${NC} ⚠️  View Errors"
-    echo -e "  ${C}[h]${NC} ❓ Help"
+    echo -e "  ${C}[e]${NC} ⚠️  View Errors     ${C}[h]${NC} ❓ Help"
     echo ""
 }
 
@@ -510,7 +518,6 @@ case "$1" in
     model|m) clear; print_logo; switch_model ;;
     errors|err|diagnose|diag|fix) clear; print_logo; diagnose_problems ;;
     dash|ui) clear; print_logo; open_dashboard ;;
-    session|sessions|ss) shift; python3 "$DEGENI_HOME/bin/degeni-session" "$@" ;;
     uninstall) bash "$DEGENI_HOME/uninstall.sh" ;;
     help|h|-h|--help) clear; print_logo; show_help ;;
     version|-v|--version) echo "DEGENI v$VERSION by BITZY.ID" ;;
@@ -521,7 +528,7 @@ case "$1" in
             print_logo
             show_status
             show_menu
-            read -p "  Select [0-9/s/e/h]: " choice
+            read -p "  Select [0-9/e/h]: " choice
             case $choice in
                 1) chat_mode ;;
                 2) show_status; read -p "  Press Enter..." ;;
@@ -534,7 +541,6 @@ case "$1" in
                 8) switch_model; read -p "  Press Enter..." ;;
                 9) open_dashboard; read -p "  Press Enter..." ;;
                 0|q) echo ""; info "Goodbye!"; exit 0 ;;
-                s|S) python3 "$DEGENI_HOME/bin/degeni-session"; read -p "  Press Enter..." ;;
                 e|E) view_errors; read -p "  Press Enter..." ;;
                 h|H) show_help; read -p "  Press Enter..." ;;
             esac
