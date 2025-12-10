@@ -1,0 +1,33 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs
+logs/*.log
+*.log
+
+# Session data (optional - comment out if you want to track sessions)
+sessions/*.json
+!sessions/.gitkeep
+
+# Distribution files
+*.tar.gz
+*.zip
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+*.key
+credentials.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
