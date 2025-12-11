@@ -281,7 +281,7 @@ diagnose_problems() {
     # Check 3: Rate Limit / Quota errors
     echo -e "  ${W}[3] Rate Limits${NC}"
     if [ -f "$PROXY_DIR/cliproxyapi.log" ]; then
-        local rate_errors=$(grep -c "429\|rate.limit\|quota" "$PROXY_DIR/cliproxyapi.log" 2>/dev/null || echo "0")
+        local rate_errors=$(grep -E "\[error\].*429|\[error\].*rate.limit|\[error\].*quota|HTTP.*429|rate_limit_exceeded" "$PROXY_DIR/cliproxyapi.log" 2>/dev/null | wc -l || echo "0")
         if [ "$rate_errors" -gt 0 ]; then
             echo -e "      ${Y}! $rate_errors rate limit warning(s)${NC}"
             echo -e "      ${Y}Problem:${NC} Model mencapai quota limit"
@@ -397,7 +397,7 @@ health_check() {
     
     # Recent errors check
     if [ -f "$PROXY_DIR/cliproxyapi.log" ]; then
-        local recent_errors=$(tail -50 "$PROXY_DIR/cliproxyapi.log" | grep -c "429\|payment_required\|Suspended" 2>/dev/null || echo "0")
+        local recent_errors=$(tail -50 "$PROXY_DIR/cliproxyapi.log" | grep -E "\[error\].*429|\[error\].*rate.limit|payment_required|Suspended" 2>/dev/null | wc -l || echo "0")
         [ "$recent_errors" -gt 5 ] && ((issues++))
     fi
     
