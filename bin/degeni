@@ -494,10 +494,29 @@ chat_mode() {
     echo ""
     echo -e "  ${D}Type your message and press Enter${NC}"
     echo -e "  ${D}Press Ctrl+C to exit${NC}"
+    echo -e "  ${D}Auto-recovery enabled for auth errors${NC}"
     echo ""
 
-    # Direct call to Claude Code CLI without session wrapper
-    claude --dangerously-skip-permissions --model "$current_model"
+    # Wrapper script for Claude with error handling
+    cat > /tmp/claude-wrapper.sh << 'EOF'
+#!/bin/bash
+while true; do
+    claude --dangerously-skip-permissions --model "$1" 2>&1 | while IFS= read -r line; do
+        if echo "$line" | grep -q "auth_unavailable\|no auth available\|500"; then
+            echo -e "\n⚠ Auth error detected, attempting recovery..."
+            ~/DEGENI/bin/degeni-smart-handler auto-fix
+            echo -e "🔄 Restarting chat...\n"
+            exec claude --dangerously-skip-permissions --model "$(cat ~/DEGENI/config/model.conf | cut -d'=' -f2)"
+        else
+            echo "$line"
+        fi
+    done
+    break
+done
+EOF
+    chmod +x /tmp/claude-wrapper.sh
+    /tmp/claude-wrapper.sh "$current_model"
+    rm -f /tmp/claude-wrapper.sh
 }
 
 quick_ask() {
@@ -506,7 +525,19 @@ quick_ask() {
     export ANTHROPIC_AUTH_TOKEN=$(grep -A1 "api-keys:" $PROXY_DIR/config.yaml | tail -1 | sed 's/.*"\(sk-[^"]*\)".*/\1/' || echo "sk-default")
     export ANTHROPIC_DEFAULT_SONNET_MODEL=gemini-claude-sonnet-4-5-thinking
     export ANTHROPIC_DEFAULT_OPUS_MODEL=gemini-claude-opus-4-5-thinking
-    claude --dangerously-skip-permissions --model "$current_model" -p "$@"
+    
+    # Try normal request first
+    local result=$(claude --dangerously-skip-permissions --model "$current_model" -p "$@" 2>&1)
+    
+    # Check for auth errors and auto-fix
+    if echo "$result" | grep -q "auth_unavailable\|no auth available\|500"; then
+        echo -e "\n${Y}⚠ Auth error detected, attempting auto-recovery...${NC}"
+        "$DEGENI_HOME/bin/degeni-smart-handler" auto-fix
+        echo -e "${C}🔄 Retrying request...${NC}\n"
+        claude --dangerously-skip-permissions --model "$(get_model)" -p "$@"
+    else
+        echo "$result"
+    fi
 }
 
 show_help() {
