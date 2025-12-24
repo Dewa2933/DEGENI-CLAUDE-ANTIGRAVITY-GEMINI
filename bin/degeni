@@ -66,29 +66,37 @@ error() { echo -e " ${R}✗${NC} $1"; }
 warning() { echo -e " ${Y}!${NC} $1"; }
 info() { echo -e " ${B}→${NC} $1"; }
 
-show_status() {
-    draw_line
-    echo -e " ${W}SYSTEM STATUS${NC}"
-    draw_line
-    echo ""
+quick_status() {
+    echo -e "${C}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e " ${W}DEGENI QUICK STATUS${NC}"
+    echo -e "${C}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     
-    if pgrep -f "cli-proxy-api" > /dev/null 2>&1; then
-        local pid=$(pgrep -f "cli-proxy-api" | head -1)
-        echo -e "  ${W}Proxy Server${NC}    ${G}● Online${NC} ${D}(PID: $pid)${NC}"
+    # Live API test
+    echo -ne "  Testing API... "
+    local test_result=$(timeout 8 curl -s -X POST http://localhost:8317/v1/messages \
+        -H "x-api-key: $(grep -A1 'api-keys:' $PROXY_DIR/config.yaml | tail -1 | sed 's/.*\"\(sk-[^\"]*\)\".*/\1/')" \
+        -H "Content-Type: application/json" \
+        -H "anthropic-version: 2023-06-01" \
+        -d '{"model":"gemini-claude-sonnet-4-5-thinking","max_tokens":5,"messages":[{"role":"user","content":"test"}]}' 2>&1)
+    
+    if echo "$test_result" | grep -q "content\|text"; then
+        echo -e "${G}✓ WORKING${NC}"
+        echo -e "  Status: ${G}● NO LIMITS - Ready to use!${NC}"
+    elif echo "$test_result" | grep -q "429\|rate.limit\|quota"; then
+        echo -e "${R}✗ RATE LIMITED${NC}"
+        echo -e "  Status: ${R}● LIMIT CONFIRMED${NC}"
+        echo -e "  Fix: ${C}degeni model${NC} (switch model)"
+    elif echo "$test_result" | grep -q "payment_required\|unauthorized"; then
+        echo -e "${R}✗ AUTH ERROR${NC}"
+        echo -e "  Status: ${R}● NEED RE-AUTH${NC}"
+        echo -e "  Fix: ${C}degeni add${NC} (login ulang)"
     else
-        echo -e "  ${W}Proxy Server${NC}    ${R}● Offline${NC}"
+        echo -e "${Y}? UNKNOWN${NC}"
+        echo -e "  Status: ${Y}● PROXY ISSUE${NC}"
+        echo -e "  Fix: ${C}degeni restart${NC}"
     fi
     
-    local ag_count=$(ls $AUTH_DIR/antigravity-*.json 2>/dev/null | wc -l)
-    local gc_count=$(ls $AUTH_DIR/*.json 2>/dev/null | grep -v antigravity | wc -l)
-    echo -e "  ${W}Antigravity${NC}     ${C}$ag_count account(s)${NC}"
-    echo -e "  ${W}Gemini CLI${NC}      ${C}$gc_count account(s)${NC}"
-    
-    if [ -f "$PROXY_DIR/cliproxyapi.log" ]; then
-        local err=$(grep -c "payment_required\|Suspended" "$PROXY_DIR/cliproxyapi.log" 2>/dev/null || echo "0")
-        [ "$err" -gt 0 ] && echo -e "  ${W}Issues${NC}          ${R}$err detected${NC}" || echo -e "  ${W}Issues${NC}          ${G}None${NC}"
-    fi
-    echo ""
+    echo -e "${C}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 }
 
 list_accounts() {
@@ -290,32 +298,38 @@ diagnose_problems() {
     fi
     echo ""
     
-    # Check 3: Rate Limit / Quota errors
+    # Check 3: Rate Limit / Quota errors (RECENT ONLY)
     echo -e "  ${W}[3] Rate Limits${NC}"
     if [ -f "$PROXY_DIR/cliproxyapi.log" ]; then
-        local rate_errors=$(grep -E "\[error\].*429|\[error\].*rate.limit|\[error\].*quota|HTTP.*429|rate_limit_exceeded" "$PROXY_DIR/cliproxyapi.log" 2>/dev/null | wc -l || echo "0")
-        if [ "$rate_errors" -gt 0 ]; then
-            echo -e "      ${Y}! $rate_errors rate limit warning(s)${NC}"
-            echo -e "      ${Y}Problem:${NC} Model mencapai quota limit"
+        # Only check last 100 lines for recent errors
+        local rate_errors=$(tail -100 "$PROXY_DIR/cliproxyapi.log" 2>/dev/null | grep -E "\[error\].*429|\[error\].*rate.limit|\[error\].*quota|HTTP.*429|rate_limit_exceeded" | wc -l || echo "0")
+        # Only flag as problem if there are recent errors (last 5 minutes)
+        local recent_errors=$(tail -50 "$PROXY_DIR/cliproxyapi.log" 2>/dev/null | grep -E "$(date '+%Y-%m-%d %H:%M'|cut -c1-13)" | grep -E "429|rate.limit|quota" | wc -l || echo "0")
+        if [ "$recent_errors" -gt 0 ]; then
+            echo -e "      ${Y}! $recent_errors recent rate limit(s)${NC}"
+            echo -e "      ${Y}Problem:${NC} Model mencapai quota limit (aktif)"
             echo -e "      ${C}Solution:${NC}"
             echo -e "        1. degeni restart ${D}(clear suspended)${NC}"
             echo -e "        2. degeni model ${D}(switch model)${NC}"
             echo -e "        3. degeni add ${D}(tambah akun)${NC}"
             has_problems=1
             ((problem_count++))
+        elif [ "$rate_errors" -gt 0 ]; then
+            echo -e "      ${D}~ $rate_errors old rate limit(s) (resolved)${NC}"
         else
             echo -e "      ${G}✓ No rate limits${NC}"
         fi
     fi
     echo ""
     
-    # Check 4: Payment Required errors
+    # Check 4: Payment Required errors (RECENT ONLY)
     echo -e "  ${W}[4] Payment/Auth Errors${NC}"
     if [ -f "$PROXY_DIR/cliproxyapi.log" ]; then
-        local pay_errors=$(grep -c "payment_required\|auth_unavailable\|unauthorized" "$PROXY_DIR/cliproxyapi.log" 2>/dev/null | head -1 || echo "0")
+        # Only check last 50 lines for recent payment errors
+        local pay_errors=$(tail -50 "$PROXY_DIR/cliproxyapi.log" 2>/dev/null | grep -c "payment_required\|auth_unavailable\|unauthorized" | head -1 || echo "0")
         pay_errors=${pay_errors:-0}
         if [ "$pay_errors" -gt 0 ] 2>/dev/null; then
-            echo -e "      ${R}✗ $pay_errors payment/auth error(s)${NC}"
+            echo -e "      ${R}✗ $pay_errors recent payment/auth error(s)${NC}"
             echo -e "      ${Y}Problem:${NC} Token expired atau akun perlu reauth"
             echo -e "      ${C}Solution:${NC}"
             echo -e "        1. degeni restart ${D}(refresh token)${NC}"
@@ -323,37 +337,54 @@ diagnose_problems() {
             has_problems=1
             ((problem_count++))
         else
-            echo -e "      ${G}✓ No auth errors${NC}"
+            echo -e "      ${G}✓ No recent auth errors${NC}"
         fi
     fi
     echo ""
     
-    # Check 5: Suspended accounts
+    # Check 5: Suspended accounts (RECENT ONLY)
     echo -e "  ${W}[5] Suspended Accounts${NC}"
     if [ -f "$PROXY_DIR/cliproxyapi.log" ]; then
-        local suspended=$(grep -c "Suspended" "$PROXY_DIR/cliproxyapi.log" 2>/dev/null | head -1 || echo "0")
+        # Only check last 20 lines for active suspensions
+        local suspended=$(tail -20 "$PROXY_DIR/cliproxyapi.log" 2>/dev/null | grep -c "Suspended" | head -1 || echo "0")
         suspended=${suspended:-0}
         if [ "$suspended" -gt 0 ] 2>/dev/null; then
-            echo -e "      ${Y}! $suspended suspension(s) detected${NC}"
+            echo -e "      ${Y}! $suspended recent suspension(s)${NC}"
             echo -e "      ${Y}Problem:${NC} Beberapa akun di-suspend sementara"
             echo -e "      ${C}Solution:${NC} degeni restart ${D}(auto unsuspend)${NC}"
             has_problems=1
             ((problem_count++))
         else
-            echo -e "      ${G}✓ No suspensions${NC}"
+            echo -e "      ${G}✓ No active suspensions${NC}"
         fi
     fi
     echo ""
     
-    # Check 6: Connection test
-    echo -e "  ${W}[6] API Connection${NC}"
-    local test_result=$(timeout 10 curl -s -o /dev/null -w "%{http_code}" http://localhost:8317/v1/models 2>/dev/null || echo "000")
-    if [ "$test_result" == "200" ]; then
-        echo -e "      ${G}✓ API responding${NC}"
+    # Check 6: Live API Connection Test
+    echo -e "  ${W}[6] Live API Test${NC}"
+    local test_result=$(timeout 10 curl -s -X POST http://localhost:8317/v1/messages \
+        -H "x-api-key: $(grep -A1 'api-keys:' $PROXY_DIR/config.yaml | tail -1 | sed 's/.*\"\(sk-[^\"]*\)\".*/\1/')" \
+        -H "Content-Type: application/json" \
+        -H "anthropic-version: 2023-06-01" \
+        -d '{"model":"gemini-claude-sonnet-4-5-thinking","max_tokens":5,"messages":[{"role":"user","content":"hi"}]}' 2>&1)
+    
+    if echo "$test_result" | grep -q "content\|text"; then
+        echo -e "      ${G}✓ API working - NO LIMITS${NC}"
+    elif echo "$test_result" | grep -q "429\|rate.limit\|quota"; then
+        echo -e "      ${R}✗ RATE LIMITED (confirmed)${NC}"
+        echo -e "      ${Y}Problem:${NC} Model benar-benar limit saat ini"
+        echo -e "      ${C}Solution:${NC} degeni model ${D}(switch ke model lain)${NC}"
+        has_problems=1
+        ((problem_count++))
+    elif echo "$test_result" | grep -q "payment_required\|unauthorized"; then
+        echo -e "      ${R}✗ AUTH ERROR (confirmed)${NC}"
+        echo -e "      ${Y}Problem:${NC} Akun perlu re-auth"
+        echo -e "      ${C}Solution:${NC} degeni add ${D}(login ulang)${NC}"
+        has_problems=1
+        ((problem_count++))
     else
-        echo -e "      ${R}✗ API not responding (HTTP $test_result)${NC}"
-        echo -e "      ${Y}Problem:${NC} Proxy API tidak merespons"
-        echo -e "      ${C}Solution:${NC} degeni restart"
+        echo -e "      ${Y}? API not responding properly${NC}"
+        echo -e "      ${D}Response: $(echo "$test_result" | head -1 | cut -c1-50)...${NC}"
         has_problems=1
         ((problem_count++))
     fi
@@ -397,7 +428,7 @@ diagnose_problems() {
     echo ""
 }
 
-# Quick health check function
+# Quick health check function - FIXED VERSION
 health_check() {
     local issues=0
     
@@ -405,12 +436,12 @@ health_check() {
     pgrep -f "cli-proxy-api" > /dev/null 2>&1 || ((issues++))
     
     # Account check
-    [ $(ls $AUTH_DIR/antigravity-*.json 2>/dev/null | wc -l) -eq 0 ] && ((issues++))
+    [ $(ls $AUTH_DIR/antigravity-*.json 2>/dev/null | grep -v disabled | wc -l) -eq 0 ] && ((issues++))
     
-    # Recent errors check
+    # Recent errors check - ONLY LAST 10 LINES
     if [ -f "$PROXY_DIR/cliproxyapi.log" ]; then
-        local recent_errors=$(tail -50 "$PROXY_DIR/cliproxyapi.log" | grep -E "\[error\].*429|\[error\].*rate.limit|payment_required|Suspended" 2>/dev/null | wc -l || echo "0")
-        [ "$recent_errors" -gt 5 ] && ((issues++))
+        local recent_errors=$(tail -10 "$PROXY_DIR/cliproxyapi.log" 2>/dev/null | grep -E "\[error\].*429|\[error\].*rate.limit|payment_required|Suspended" | wc -l || echo "0")
+        [ "$recent_errors" -gt 2 ] && ((issues++))
     fi
     
     echo $issues
@@ -487,7 +518,8 @@ show_help() {
     echo -e "  ${W}degeni chat${NC}         Interactive chat mode"
     echo -e "  ${W}degeni${NC}              Interactive menu"
     echo ""
-    echo -e "  ${W}degeni status${NC}       System status"
+    echo -e "  ${W}degeni check${NC}        Quick real-time status"
+  echo -e "  ${W}degeni status${NC}       Detailed system status"
     echo -e "  ${W}degeni diagnose${NC}     🔍 Diagnose problems + auto-fix"
     echo -e "  ${W}degeni fix${NC}          Same as diagnose"
     echo ""
@@ -522,7 +554,8 @@ show_menu() {
 case "$1" in
     chat|c) clear; print_logo; chat_mode ;;
     ask|a) shift; quick_ask "$@" ;;
-    status|s) clear; print_logo; show_status ;;
+    status|s) clear; print_logo; quick_status ;;
+    check|quick) quick_status ;;
     list|l) clear; print_logo; list_accounts ;;
     add) clear; print_logo; add_account ;;
     disable|d) clear; print_logo; disable_account ;;
@@ -540,12 +573,12 @@ case "$1" in
         while true; do
             clear
             print_logo
-            show_status
+            quick_status
             show_menu
             read -p "  Select [0-9/e/h]: " choice
             case $choice in
                 1) chat_mode ;;
-                2) show_status; read -p "  Press Enter..." ;;
+                2) quick_status; read -p "  Press Enter..." ;;
                 3) list_accounts; read -p "  Press Enter..." ;;
                 4) add_account; read -p "  Press Enter..." ;;
                 5) echo -e "\n  ${C}[d]${NC} Disable  ${C}[e]${NC} Enable"; read -p "  Choice: " c
